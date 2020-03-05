@@ -66,9 +66,8 @@ class LinkAsTorchModel(torch.nn.Module):
         link (:class:`chainer.Link`): A link. Must have been initialized.
     '''
 
-    def __init__(self, link, **kwargs):
+    def __init__(self, link):
         super().__init__()
-        device = kwargs.pop('_device', None)
         uninitialized_params = [
             n for n, p in sorted(_named_params(link)) if p.array is None]
         if uninitialized_params:
@@ -81,11 +80,9 @@ class LinkAsTorchModel(torch.nn.Module):
                     ', '.join(repr(n) for n in uninitialized_params)))
 
         for name, child in _named_children(link):
-            child_module = LinkAsTorchModel(child, _device=device)
+            child_module = LinkAsTorchModel(child)
             setattr(self, name, child_module)
         for name, param in sorted(_named_params(link)):
-            if device is not None:
-                param.to_device(device)
             setattr(self, name, ChainerParameter(param))
 
         self.link = link
